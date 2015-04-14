@@ -142,4 +142,47 @@ io.on('connection', function (socket) {
 		//socketList[username] = "" ;
 		}
   });
+  socket.on('leave', function(usr,room){
+    console.log('socket.on(leave) is called' + usr + " " + room);
+    var roomidx = findroom(room);
+    for(i=0;i<chatroom[roomidx].user.length;i++){
+      if(usr == chatroom[roomidx].user[i].name) chatroom[roomidx].user.splice(i,1);
+    }
+    socket.leave(room); // SOCKET ROOM
+    socket.join("_LOBBY_");
+    io.to(socket.id).emit('returntolobby',usr);
+    io.to("_LOBBY_").emit('returntolobby', usr);
+  });
+
+  socket.on('exit', function(usr,room){
+    console.log('socket.on(exit) is called' + usr + " " + room);
+    if(room=="_NOT_IN_ANY_ROOM_") return;
+    var roomidx = findroom(room);
+    for(i=0;i<chatroom[roomidx].user.length;i++){
+      if(usr == chatroom[roomidx].user[i].name) chatroom[roomidx].user[i].nextmsg = chatroom[roomidx].msglog.length;
+    }
+    //io.to(socket.id).emit('exit', usr);
+    socket.leave(room); // SOCKET ROOM
+    socket.join("_LOBBY_");
+    io.to(socket.id).emit('returntolobby',usr);
+    io.to("_LOBBY_").emit('returntolobby', usr);
+  });
+  socket.on('get unread', function(usr,room){
+    console.log('socket.on(get unread) is called' + usr + " " + room);
+    if(room=="_NOT_IN_ANY_ROOM_") return;
+    var unreadmsg = [];
+    var roomidx = findroom(room);
+    var startunread = 0;
+    console.log("CHAT ROOM IDX " + roomidx + " " + chatroom[roomidx].user.length);
+    for(i=0;i<chatroom[roomidx].user.length;i++){
+      if(usr == chatroom[roomidx].user[i].name){
+        startunread = chatroom[roomidx].user[i].nextmsg;
+        break;
+      }
+    }
+    for(i=startunread;i<chatroom[roomidx].msglog.length;i++){
+      unreadmsg[unreadmsg.length] = chatroom[roomidx].msglog[i];
+    }
+    io.to(socket.id).emit('get unread', unreadmsg);
+  });
 });
