@@ -1,0 +1,76 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DIS SYS a book : Chatroom</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="w-section section section-main" id="startPage">
+    <div class="w-container main-container" id="mainContainer">
+      <div class="main-text" id="mainText">DIS&nbsp;SYS
+        <br>a book</div><a class="button" href="#" id="startButton">Get Started</a>
+    </div>
+  </div>
+  <div class="w-section login-section" id="loginPage" style="visible: visible; display: none; ..">
+    <div class="w-container login-container" id="loginContainer">
+      <h1>Please log in</h1>
+      <div class="userform" id="UserForm">
+        <p class="loginparagraph" id="loginParagraph">Create new username or log in as existing user.</p>
+        <div class="w-form login-form">
+          
+            <label class="field-name" >Username:</label>
+            <input class="w-input username-field" id="usernameInput"  placeholder="Enter your username" name="Username" data-name="Username">
+            <input class="w-button submit-button" type="button" id="submitButton" value="Submit" >
+          
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="w-section room-group-section" id="roomGroupPage" style="visible: visible; display: none; ..">
+    <div class="w-row room-group-row" id="roomGroupRow">
+      <div class="w-col w-col-5 w-col-stack left-column">
+        <div class="w-container welcome-container">
+          <h1 class="welcom-heading">Welcome</h1>
+          <h1 class="username-heading" id="uesrnameHeading"></h1>
+          <p class="welcom-paragraph" id="welcomParagraph">Please click a chat room on the left or create new chatroom .</p>
+        </div>
+        <label class="field-name2" for="chatroomName">Chatroom name :</label>
+            <input class="w-input chatroomname-field" id="chatroomName" type="text" placeholder="Enter Chatroom name" name="name" data-name="Name">
+            <input class="w-button create-button"  id="createButton" type="submit" value="Create" data-wait="Please wait...">
+
+      	<div class="w-col w-col-7 w-col-stack chatroom-group-column" id="roomGroupColumn">
+          <ul class="chatroom-list" id="chatroomList">
+        </ul>
+      </div>
+    </div>
+  </div></div>
+  <div class="w-section chatroom-section" id="chatroomPage" style="visible: visible; display: none; ..">
+    <div class="chatroom-top">
+      <h1 class="chatroom-header" id="ChatroomHeading">Chatroom</h1>
+      <h1 class="chatroom-name" id="chatroomHeadingName">Chatroom</h1>
+      <div class="buttonblock" id="buttonBlock"><a class="exitbutton" href="#" id="ExitButton">Exit</a><a class="exitbutton" href="#" id="ExitButton">Leave</a>
+      </div>
+    </div>
+    <div class="w-row chatroom-row" id="ChatroomMidRow">
+      <div class="w-col w-col-10 chatroom-left-column" id="chatColumn">
+        <ul class="w-list-unstyled message-list" id="messageList">
+          <li class="message-value">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Mma (12.00) :&nbsp;&nbsp;</li>
+        </ul>
+      </div>
+      <div class="w-col w-col-2 chatroom-right-column" id="memberColumn">
+        <ul class="w-list-unstyled chatroom-member-list" id="memberList">
+        </ul>
+      </div>
+    </div>
+    <div class="chatroom-bottom">
+       <input class="w-input message-input" id="inputMessage" type="text" placeholder="Chat Here..." name="Chat-Message" data-name="Chat Message" autofocus="autofocus">
+          <input class="w-button send-button" id="sendButton" type="submit" value="Send">
+        </form>
+  </div>
+</body>
+  <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/main.js"></script>
+  
+</body>
+</html>
