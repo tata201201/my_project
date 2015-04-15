@@ -55,10 +55,11 @@ io.on('connection', function (socket) {
 	}
     // add the client's username to the global list
     ++numUsers;
-	socketList[username] = socket.id ;
+	socketList[socket.id] = username  ;
 	socketID = socket.id ;
 	login = true ;
-	console.log('log in... '+ username +' total user : ' + numUsers + " socketID : " + socketList[username]) ;
+	socket.join("_LOBBY_");
+	console.log('log in... '+ username +' total user : ' + numUsers + " socketID : " + socket.id) ;
   }
   });
   socket.on('get group', function(){
@@ -92,14 +93,21 @@ io.on('connection', function (socket) {
 			}
   });
   // when the client emits 'typing', we broadcast it to others
-  socket.on('enter group', function (username,gID,callbackList) {
+  socket.on('enter group', function (username,gID,callbackGroup) {
 		if(groupList[gID].id != undefined){
 			// Group is available
 			console.log(username + " enter group " + gID);
-		groupList[gID].memberList.push({username :username , nextMSG : groupList[gID].messageList.length}) ;
-			io.to(gID).emit('new member',groupList[gID].memberList);
-			callbackList(groupList[gID]);
-			socket.join(gID) ;
+			var joined = false ;
+			for(i = 0 ; i < groupList[gID].memberList.length ; i++){
+				if (groupList[gID].memberList[i].username == username) joined = true ;
+			}
+			//enter this group first time 
+			if(!joined) groupList[gID].memberList.push({username :username , nextMessage : groupList[gID].messageList.length}) ;
+			
+			io.to(gID).emit('upadate member',groupList[gID].memberList);
+			socket.leave("_LOBBY_");
+			socket.join(groupList[gID].name) ;
+			callbackGroup(groupList[gID]);
 		}
 		else {
 			callbackList(undefined);
@@ -116,8 +124,8 @@ io.on('connection', function (socket) {
 	
     var curtime = d.getHours() + ":"+ min+ ":"+sec; 
     var newMessage = {sender:user, message:msg, time:curtime};
-    groupList[i].messageList[groupList[i].messageList.length] = newMessage ;
-	io.to(gID).emit('chat message', newMessage);
+    groupList[gID].messageList[groupList[gID].messageList.length] = newMessage ;
+	io.to(groupList[gID].name).emit('chat message', newMessage);
   });
   socket.on('typing', function () {
     socket.broadcast.emit('typing', {
@@ -141,5 +149,61 @@ io.on('connection', function (socket) {
 		//console.log(socketList[username] + " username : "+socket.username +  " log out");
 		//socketList[username] = "" ;
 		}
+	console.log('socket.on(disconnect) is called from ' + socketList[socket.id] +" sID =" + socketID );
+	var gID = -1 ;
+    for(i=0 ; i < groupList.length ; i++){
+		for(j = 0 ; j < groupList[i].memberList.length ; j++){
+			//Update nextMSG
+			if(socketList[socket.id] == groupList[i].memberList[j].username) 
+				groupList[i].memberList[j].nextMessage = groupList[i].messageList.length;
+				gID = groupList[i].id ;
+		}
+	}
+    //io.to(socket.id).emit('exit', usr);
+    if (gID != -1 ){ socket.leave(groupList[gID].name); // SOCKET ROOM
+		io.to(gID).emit('upadate member',groupList[gID].memberList);
+	}
+  });
+  socket.on('leave', function(usr,gID){
+    console.log('socket.on(leave) is called' + usr + " " + gID) ;
+    for(i=0;i<	groupList[gID].memberList.length ;i++){
+      if(usr == groupList[gID].memberList[i].username) groupList[gID].memberList.splice(i,1); // remove that user
+    }
+    socket.leave(groupList[gID].name); // SOCKET ROOM
+    socket.join("_LOBBY_");
+	io.to(groupList[gID].name).emit('upadate member',groupList[gID].memberList);
+    io.to(socket.id).emit('returntolobby',usr);
+    io.to("_LOBBY_").emit('returntolobby', usr);
+  });
+
+  socket.on('exit', function(usr,gID){
+    console.log('socket.on(exit) is called' + usr + " " + gID);
+    if(gID == -1) return;
+    for(i=0;i < groupList[gID].memberList.length;i++){
+      if(usr == groupList[gID].memberList[i].username) groupList[gID].memberList[i].nextMessage = groupList[gID].messageList.length;
+    }
+    //io.to(socket.id).emit('exit', usr);
+    socket.leave(groupList[gID].name); // SOCKET ROOM
+	io.to(groupList[gID].name).emit('upadate member',groupList[gID].memberList);
+    io.to(socket.id).emit('returntolobby',usr);
+    io.to("_LOBBY_").emit('returntolobby', usr);
+  });
+  socket.on('get unread', function(usr,gID , callbackUnreadMessage){
+    console.log('socket.on(get unread) is called' + usr + " " + gID);
+    if(gID == -1) return;
+    var unreadmsg = [];
+    var startunread = 0;
+    console.log("CHAT ROOM IDX " + gID + " " + groupList[gID].memberList.length);
+    for(i=0 ; i<groupList[gID].memberList.length ; i++){
+      if(usr == groupList[gID].memberList[i].username){
+        startunread = groupList[gID].memberList[i].nextMessage;
+        break;
+      }
+    }
+    for(i = startunread;i<groupList[gID].messageList.length;i++){
+		
+      unreadmsg[unreadmsg.length] = groupList[gID].messageList[i];
+    }
+	callbackUnreadMessage(unreadmsg);
   });
 });

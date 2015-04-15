@@ -536,6 +536,7 @@ p {
   bottom: 20px;
   overflow-x: auto;
   overflow-y: auto;
+  min-width: 300px
   width: auto ;
 }
 .chatroom-creating-form {
@@ -871,7 +872,7 @@ p {
   padding-left: 22px;
 }
 .chatroom-group-column {
-  position: absolute;
+    position: absolute;
   left: 750px;
   top: 0px;
   right: 0px;
@@ -880,6 +881,7 @@ p {
   overflow-y: visible;
   height: 375px;
   max-height: 375px;
+  min-width: 300px;
   padding-right: 132px;
   border: 5px solid black;
 }
