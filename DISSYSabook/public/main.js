@@ -50,6 +50,9 @@ $(function() {
   
 			document.getElementById("roomGroupPage").style.display='block';
 			document.getElementById("roomGroupPage").style.visibility='visible';
+			
+			document.getElementById("chatroomPage").style.display='none';
+			document.getElementById("chatroomPage").style.visibility='block';
 			getGroupList();
 		}
   function pagechangeToChatroom()  {
@@ -66,6 +69,10 @@ $(function() {
 			document.getElementById("chatroomPage").style.visibility='visible';
 		}
   //** Element Listener **
+  //Leave group
+  document.getElementById('leaveButton').addEventListener("click",leaveGroup) ;
+  //Exit group
+  document.getElementById('exitButton').addEventListener("click",exitGroup) ;
   //Chat Message
   document.getElementById('inputMessage').onkeypress = function(e) {
     		var event = e || window.event;
@@ -195,35 +202,42 @@ $(function() {
 	    if (group != undefined){
 			currentGroup = group ;
 			$("#chatroomHeadingName").text(currentGroup.name) ;
-			createMessageList(currentGroup.messageList);
+			//createMessageList(currentGroup.messageList);
 			createChatMemberList(currentGroup.memberList);
 			pagechangeToChatroom();
 		}else{
 			alert('Cannot enter ' + roupList[gID].name + ". The Group may be down.")
 		}
 	  });
+	  socket.emit('get unread',username,gID,function(unreadMessageList){
+		  createMessageList(unreadMessageList);
+	  });
   }	
-  function createMessageList(messageList){
+  function createMessageList(msgList){
 	  $("#messageList").empty();
 	  //Get Unread!!!!
-	  var nextMessage = messageList.length ;
+	  /*var nextMessage = messageList.length ;
 	  var haveUnread = false ;
 	  for (i = 0 ; i < currentGroup.memberList[i] ; i++){
 		  if (username == currentGroup.memberList[i].username){
 			  nextMessage = currentGroup.memberList[i].nextMessage ;
 			  haveUnread = true ;	
 	  }
-	  }
+	  }*/
+	  if(msgList.length != 0){
 	  var count = 0 ;
-	  for (i = nextMessage ; i < messageList.length &&  messageList.length != 0  ; i++){
+	  for (i = 0 ; i < messageList.length &&  messageList.length != 0  ; i++){
 			var message = msgList[i] ;
 			var option = " style='background: #a5a;'";
-			$('#messageList').append('<li class="message-value"' + option + "><strong>" +
+			addChatMessage(message);
+		/*$('#messageList').append('<li class="message-value"' + option + "><strong>" +
 				message.sender + " (" + message.time + 
-				") :</strong> " + message.message+"</li>");
+				") :</strong> " + message.message+"</li>");*/
 			count++;
 	  }
-	  if (haveUnread) $('#messageList').append('<li class="message-value"> Unread '+ count +' Messagese </li>'); 
+	  console.log(username + " have unread " + count + "messages .");
+	  if (count >0 ) $('#messageList').append('<li class="message-value"> Unread '+ count +' Messagese </li>'); 
+	  }
   }
   function createChatMemberList(memberList){
 	  $("#memberList").empty();
@@ -267,69 +281,24 @@ $(function() {
   }
 
 
-  // Removes the visual chat typing message
-  function removeChatTyping (data) {
-    getTypingMessages(data).fadeOut(function () {
-      $(this).remove();
-    });
-  }
-
-  // Adds a message element to the messages and scrolls to the bottom
-  // el - The element to add as a message
-  // options.fade - If the element should fade-in (default = true)
-  // options.prepend - If the element should prepend
-  //   all other messages (default = false)
-  function addMessageElement (el, options) {
-    var $el = $(el);
-
-    // Setup default options
-    if (!options) {
-      options = {};
-    }
-    if (typeof options.fade === 'undefined') {
-      options.fade = true;
-    }
-    if (typeof options.prepend === 'undefined') {
-      options.prepend = false;
-    }
-
-    // Apply options
-    if (options.fade) {
-      $el.hide().fadeIn(FADE_TIME);
-    }
-    if (options.prepend) {
-      $messages.prepend($el);
-    } else {
-      $messages.append($el);
-    }
-    $messages[0].scrollTop = $messages[0].scrollHeight;
-  }
-
   // Prevents input from having injected markup
   function cleanInput (input) {
     return $('<div/>').text(input).text();
   }
-
-  // Updates the typing event
-  function updateTyping () {
-    if (connected) {
-      if (!typing) {
-        typing = true;
-        socket.emit('typing');
-      }
-      lastTypingTime = (new Date()).getTime();
-
-      setTimeout(function () {
-        var typingTimer = (new Date()).getTime();
-        var timeDiff = typingTimer - lastTypingTime;
-        if (timeDiff >= TYPING_TIMER_LENGTH && typing) {
-          socket.emit('stop typing');
-          typing = false;
-        }
-      }, TYPING_TIMER_LENGTH);
-    }
+  function leaveGroup(){
+	$('#messageList').empty();
+	console.log(username + " leave "+ currentGroup.id + currentGroup);
+	socket.emit('leave',username,currentGroup.id);
+    currentGroup = undefined;
+	pagechangeToRoomGroup() ;
   }
-
+  function exitGroup(){
+    $('#messageList').empty();
+	console.log(username + " exit "+ currentGroup.id + currentGroup);
+    socket.emit('exit',username,currentGroup.id);
+	currentGroup = undefined ;
+	pagechangeToRoomGroup() ;
+  }
   // Gets the 'X is typing' messages of a user
   function getTypingMessages (data) {
     return $('.typing.message').filter(function (i) {
@@ -362,7 +331,7 @@ $(function() {
     addChatMessage(newMessage);
   });
   
-  socket.on('new member', function (newMemberList) {
+  socket.on('upadate member', function (newMemberList) {
     createChatMemberList(newMemberList);
   });
   socket.on('send groupList',function(g){
