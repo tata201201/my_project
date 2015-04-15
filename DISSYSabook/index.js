@@ -106,7 +106,7 @@ io.on('connection', function (socket) {
 			
 			io.to(gID).emit('upadate member',groupList[gID].memberList);
 			socket.leave("_LOBBY_");
-			socket.join(gID) ;
+			socket.join(groupList[gID].name) ;
 			callbackGroup(groupList[gID]);
 		}
 		else {
@@ -125,7 +125,7 @@ io.on('connection', function (socket) {
     var curtime = d.getHours() + ":"+ min+ ":"+sec; 
     var newMessage = {sender:user, message:msg, time:curtime};
     groupList[gID].messageList[groupList[gID].messageList.length] = newMessage ;
-	io.to(gID).emit('chat message', newMessage);
+	io.to(groupList[gID].name).emit('chat message', newMessage);
   });
   socket.on('typing', function () {
     socket.broadcast.emit('typing', {
@@ -160,7 +160,7 @@ io.on('connection', function (socket) {
 		}
 	}
     //io.to(socket.id).emit('exit', usr);
-    if (gID != -1 ){ socket.leave(gID); // SOCKET ROOM
+    if (gID != -1 ){ socket.leave(groupList[gID].name); // SOCKET ROOM
 		io.to(gID).emit('upadate member',groupList[gID].memberList);
 	}
   });
@@ -169,9 +169,9 @@ io.on('connection', function (socket) {
     for(i=0;i<	groupList[gID].memberList.length ;i++){
       if(usr == groupList[gID].memberList[i].username) groupList[gID].memberList.splice(i,1); // remove that user
     }
-    socket.leave(gID); // SOCKET ROOM
+    socket.leave(groupList[gID].name); // SOCKET ROOM
     socket.join("_LOBBY_");
-	io.to(gID).emit('upadate member',groupList[gID].memberList);
+	io.to(groupList[gID].name).emit('upadate member',groupList[gID].memberList);
     io.to(socket.id).emit('returntolobby',usr);
     io.to("_LOBBY_").emit('returntolobby', usr);
   });
@@ -183,8 +183,8 @@ io.on('connection', function (socket) {
       if(usr == groupList[gID].memberList[i].username) groupList[gID].memberList[i].nextMessage = groupList[gID].messageList.length;
     }
     //io.to(socket.id).emit('exit', usr);
-    socket.leave(gID); // SOCKET ROOM
-	io.to(gID).emit('upadate member',groupList[gID].memberList);
+    socket.leave(groupList[gID].name); // SOCKET ROOM
+	io.to(groupList[gID].name).emit('upadate member',groupList[gID].memberList);
     io.to(socket.id).emit('returntolobby',usr);
     io.to("_LOBBY_").emit('returntolobby', usr);
   });
