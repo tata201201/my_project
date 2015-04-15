@@ -226,7 +226,7 @@ $(function() {
 	  }*/
 	  if(msgList.length != 0){
 	  var count = 0 ;
-	  for (i = 0 ; i < messageList.length &&  messageList.length != 0  ; i++){
+	  for (i = 0 ; i < msgList.length  ; i++){
 			var message = msgList[i] ;
 			var option = " style='background: #a5a;'";
 			addChatMessage(message);
@@ -328,10 +328,12 @@ $(function() {
     console.log('get pm : '+pm)
   });
   socket.on('chat message', function (newMessage) {
+	  console.log('recieve message from... ' + socket.id);
     addChatMessage(newMessage);
   });
   
   socket.on('upadate member', function (newMemberList) {
+	console.log('update member list!') ;
     createChatMemberList(newMemberList);
   });
   socket.on('send groupList',function(g){

@@ -55,11 +55,11 @@ io.on('connection', function (socket) {
 	}
     // add the client's username to the global list
     ++numUsers;
-	socketList[username] = socket.id ;
+	socketList[socket.id] = username  ;
 	socketID = socket.id ;
 	login = true ;
 	socket.join("_LOBBY_");
-	console.log('log in... '+ username +' total user : ' + numUsers + " socketID : " + socketList[username]) ;
+	console.log('log in... '+ username +' total user : ' + numUsers + " socketID : " + socket.id) ;
   }
   });
   socket.on('get group', function(){
@@ -105,8 +105,9 @@ io.on('connection', function (socket) {
 			if(!joined) groupList[gID].memberList.push({username :username , nextMessage : groupList[gID].messageList.length}) ;
 			
 			io.to(gID).emit('upadate member',groupList[gID].memberList);
-			callbackGroup(groupList[gID]);
+			socket.leave("_LOBBY_");
 			socket.join(gID) ;
+			callbackGroup(groupList[gID]);
 		}
 		else {
 			callbackList(undefined);
@@ -148,11 +149,25 @@ io.on('connection', function (socket) {
 		//console.log(socketList[username] + " username : "+socket.username +  " log out");
 		//socketList[username] = "" ;
 		}
+	console.log('socket.on(disconnect) is called from ' + socketList[socket.id] +" sID =" + socketID );
+	var gID = -1 ;
+    for(i=0 ; i < groupList.length ; i++){
+		for(j = 0 ; j < groupList[i].memberList.length ; j++){
+			//Update nextMSG
+			if(socketList[socket.id] == groupList[i].memberList[j].username) 
+				groupList[i].memberList[j].nextMessage = groupList[i].messageList.length;
+				gID = groupList[i].id ;
+		}
+	}
+    //io.to(socket.id).emit('exit', usr);
+    if (gID != -1 ){ socket.leave(gID); // SOCKET ROOM
+		io.to(gID).emit('upadate member',groupList[gID].memberList);
+	}
   });
   socket.on('leave', function(usr,gID){
     console.log('socket.on(leave) is called' + usr + " " + gID) ;
-    for(i=0;i<	groupList[gID].memberList.length;i++){
-      if(usr == groupList[gID].memberList[i].username) groupList[gID].memberList[i].splice(i,1); // remove that user
+    for(i=0;i<	groupList[gID].memberList.length ;i++){
+      if(usr == groupList[gID].memberList[i].username) groupList[gID].memberList.splice(i,1); // remove that user
     }
     socket.leave(gID); // SOCKET ROOM
     socket.join("_LOBBY_");
@@ -169,7 +184,6 @@ io.on('connection', function (socket) {
     }
     //io.to(socket.id).emit('exit', usr);
     socket.leave(gID); // SOCKET ROOM
-    socket.join("_LOBBY_");
 	io.to(gID).emit('upadate member',groupList[gID].memberList);
     io.to(socket.id).emit('returntolobby',usr);
     io.to("_LOBBY_").emit('returntolobby', usr);
@@ -187,6 +201,7 @@ io.on('connection', function (socket) {
       }
     }
     for(i = startunread;i<groupList[gID].messageList.length;i++){
+		
       unreadmsg[unreadmsg.length] = groupList[gID].messageList[i];
     }
 	callbackUnreadMessage(unreadmsg);
